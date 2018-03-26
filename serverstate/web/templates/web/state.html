@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>State</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+</head>
+
+<body style="background-color: black; ">
+<div class="container" style="color: aliceblue;background-image: url('http://w4pity.net/pics/logo1.png'); background-repeat: no-repeat; background-attachment: scroll; background-position: center">
+    <div class="row" >
+        {% for server in servers %}
+            <div class="server col-sm" style="border: 2px solid black; margin: 20px; background-color: rgba(0,0,0,0.8)">
+                <a href="http://{{ server.url }}">{{ server.name }}</a>
+                <span class="url" style="visibility: hidden">{{ server.url }}</span>
+                <div class="content">
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+
+        var interval = self.setInterval(function(){ping_all()},3000);
+        function ping_all() {
+            $(".server").each(function () {
+                ping($(this).children('.content'), $(this).children('.url').text());
+            });
+        }
+
+
+        function ping(server_content, ip){
+            var msg = "Not found";
+            var avg = 0;
+            var cpt = 0;
+            for(var i=0; i<10;i++){
+                var start = $.now();
+                $.ajax({ type: "HEAD",
+                        url: "http://"+ip,
+                        cache:false,
+                        statusCode: {
+                            404: function() {
+                              server_content.text(msg).css({"color": "red"});
+                            }
+                          },
+                        complete: function(output){
+                            var ping = $.now() - start;
+                            if (ping < 1000) { // useless?
+                                cpt++;
+                                avg+= ping/cpt - avg/cpt;
+                                server_content.text(avg+" ms (on "+cpt+"tests)");
+                                if(avg < 200) {
+                                    server_content.css({"color": "green"});
+                                } else if (avg < 500) {
+                                    server_content.css({"color": "orange"});
+                                } else {
+                                    server_content.css({"color": "red"});
+                                }
+                            }
+                        }
+                  });
+            }
+        }
+
+    });
+
+
+</script>
+
+</body>
+</html>
